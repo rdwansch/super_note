@@ -1,29 +1,32 @@
 package repository
 
 import (
-	"database/sql"
-	"fmt"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func TestNoteRepositoryFindAll(t *testing.T) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/super_note")
+	db, mock, err := sqlmock.New()
 
 	if err != nil {
-		panic("Error on connection SQL: " + err.Error())
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	err = db.Ping()
+	defer db.Close()
 
-	if err != nil {
-		panic("Error on PING connection: " + err.Error())
-	}
+	rows := sqlmock.NewRows([]string{"id", "title", "content", "cover"}).
+		AddRow(1, "My Birthday", "I want a Macbook Pro", nil).
+		AddRow(2, "Her", "When I first saw you // yeah that's a song by Beyoncé Ft. Jamie Foxx", nil)
+
+	mock.ExpectQuery("SELECT id, title, content, cover FROM notes").WillReturnRows(rows)
 
 	noteRepository := NewNoteRepository(db)
-
 	notes := noteRepository.FindAll()
 
-	fmt.Println(notes)
+	assert.NotEmpty(t, notes)
+	assert.NotNil(t, notes)
 }
