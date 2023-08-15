@@ -1,5 +1,7 @@
 package domain
 
+import "context"
+
 type Note struct {
 	Id      int    `json:"id"`
 	Title   string `json:"title"`
@@ -10,8 +12,8 @@ type Note struct {
 }
 
 type NoteRepository interface {
-	FindAll() (notes []Note)
-	FindById(id int) (Note, error)
-	Create(note *Note) (err error)
-	Delete(id int) (err error)
+	FindAll(ctx context.Context) (notes []Note)
+	FindById(ctx context.Context, id int) (Note, error)
+	Create(ctx context.Context, note *Note) (err error)
+	Delete(ctx context.Context, id int) (err error)
 }

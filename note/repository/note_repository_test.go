@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"rdwansch/super_note/domain"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 
 func TestNoteRepositoryFindAll(t *testing.T) {
 	db, mock, err := sqlmock.New()
+	ctx := context.Background()
 
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -26,7 +28,7 @@ func TestNoteRepositoryFindAll(t *testing.T) {
 	mock.ExpectQuery("SELECT id, title, content, cover FROM notes").WillReturnRows(rows)
 
 	noteRepository := NewNoteRepository(db)
-	notes := noteRepository.FindAll()
+	notes := noteRepository.FindAll(ctx)
 
 	assert.NotEmpty(t, notes)
 	assert.NotNil(t, notes)
@@ -35,6 +37,7 @@ func TestNoteRepositoryFindAll(t *testing.T) {
 
 func TestNoteRepositoryFindById(t *testing.T) {
 	db, mock, err := sqlmock.New()
+	ctx := context.Background()
 
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -49,7 +52,7 @@ func TestNoteRepositoryFindById(t *testing.T) {
 		WithArgs(1).WillReturnRows(rows)
 
 	noteRepository := NewNoteRepository(db)
-	notes, err := noteRepository.FindById(1)
+	notes, err := noteRepository.FindById(ctx, 1)
 
 	assert.NoError(t, err)
 	assert.Nil(t, err)
@@ -58,6 +61,7 @@ func TestNoteRepositoryFindById(t *testing.T) {
 
 func TestNoteRepositoryCreate(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	ctx := context.Background()
 
 	notes := &domain.Note{
 		Title:   "My Birthday",
@@ -77,7 +81,7 @@ func TestNoteRepositoryCreate(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	noteRepository := NewNoteRepository(db)
-	err = noteRepository.Create(notes)
+	err = noteRepository.Create(ctx, notes)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, notes.Id)
@@ -85,6 +89,7 @@ func TestNoteRepositoryCreate(t *testing.T) {
 
 func TestRepositoryDelete(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	ctx := context.Background()
 
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -94,7 +99,7 @@ func TestRepositoryDelete(t *testing.T) {
 		ExpectExec().WithArgs(1).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	noteRepository := NewNoteRepository(db)
-	err = noteRepository.Delete(1)
+	err = noteRepository.Delete(ctx, 1)
 
 	assert.NoError(t, err)
 	assert.Nil(t, err)

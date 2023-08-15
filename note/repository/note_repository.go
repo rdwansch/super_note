@@ -11,20 +11,12 @@ type noteRepository struct {
 	*sql.DB
 }
 
-// db:= NewConnection()
-// noteRepository:=NewNoteRepository(db)
-// noteService := NewNoteService(noteRepository)
 func NewNoteRepository(db *sql.DB) domain.NoteRepository {
 	return &noteRepository{db}
 }
 
-func (n *noteRepository) FindAll() (notes []domain.Note) {
-	ctx := context.Background()
-	rows, err := n.DB.QueryContext(ctx, "SELECT id, title, content, cover FROM notes")
-
-	if err != nil {
-		panic("Error on query FindAll " + err.Error())
-	}
+func (n *noteRepository) FindAll(ctx context.Context) (notes []domain.Note) {
+	rows, _ := n.DB.QueryContext(ctx, "SELECT id, title, content, cover FROM notes")
 
 	for rows.Next() {
 		note := domain.Note{}
@@ -35,10 +27,9 @@ func (n *noteRepository) FindAll() (notes []domain.Note) {
 	return notes
 }
 
-func (n *noteRepository) FindById(id int) (domain.Note, error) {
+func (n *noteRepository) FindById(ctx context.Context, id int) (domain.Note, error) {
 	var note domain.Note
 
-	ctx := context.Background()
 	err := n.DB.QueryRowContext(ctx, "SELECT id, title, content, cover FROM notes WHERE id = ?", id).
 		Scan(&note.Id, &note.Title, &note.Content, &note.Cover)
 
@@ -46,9 +37,7 @@ func (n *noteRepository) FindById(id int) (domain.Note, error) {
 
 }
 
-func (n *noteRepository) Create(note *domain.Note) (err error) {
-	ctx := context.Background()
-
+func (n *noteRepository) Create(ctx context.Context, note *domain.Note) (err error) {
 	stmt, err := n.DB.PrepareContext(ctx, "INSERT INTO notes (title, content, cover, id_user) VALUES (?,?,?,?)")
 
 	if err != nil {
@@ -65,8 +54,7 @@ func (n *noteRepository) Create(note *domain.Note) (err error) {
 	return
 }
 
-func (n *noteRepository) Delete(id int) (err error) {
-	ctx := context.Background()
+func (n *noteRepository) Delete(ctx context.Context, id int) (err error) {
 	stmt, err := n.DB.PrepareContext(ctx, "DELETE FROM notes WHERE id = ?")
 
 	if err != nil {
