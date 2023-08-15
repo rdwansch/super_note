@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"rdwansch/super_note/domain"
 )
 
@@ -18,10 +19,7 @@ func NewNoteRepository(db *sql.DB) domain.NoteRepository {
 }
 
 func (n *noteRepository) FindAll() (notes []domain.Note) {
-	defer n.DB.Close()
-
 	ctx := context.Background()
-
 	rows, err := n.DB.QueryContext(ctx, "SELECT id, title, content, cover FROM notes")
 
 	if err != nil {
@@ -30,7 +28,7 @@ func (n *noteRepository) FindAll() (notes []domain.Note) {
 
 	for rows.Next() {
 		note := domain.Note{}
-		rows.Scan(&note.Id, &note.Tite, &note.Content, &note.Cover)
+		rows.Scan(&note.Id, &note.Title, &note.Content, &note.Cover)
 		notes = append(notes, note)
 	}
 
@@ -38,13 +36,58 @@ func (n *noteRepository) FindAll() (notes []domain.Note) {
 }
 
 func (n *noteRepository) FindById(id int) (domain.Note, error) {
-	panic("not implemented") // TODO: Implement
+	var note domain.Note
+
+	ctx := context.Background()
+	err := n.DB.QueryRowContext(ctx, "SELECT id, title, content, cover FROM notes WHERE id = ?", id).
+		Scan(&note.Id, &note.Title, &note.Content, &note.Cover)
+
+	return note, err
+
 }
 
-func (n *noteRepository) Create(note domain.Note) error {
-	panic("not implemented") // TODO: Implement
+func (n *noteRepository) Create(note *domain.Note) (err error) {
+	ctx := context.Background()
+
+	stmt, err := n.DB.PrepareContext(ctx, "INSERT INTO notes (title, content, cover, id_user) VALUES (?,?,?,?)")
+
+	if err != nil {
+		return
+	}
+	res, err := stmt.ExecContext(ctx, note.Title, note.Content, note.Cover, note.Author.Id)
+
+	if err != nil {
+		return
+	}
+	id, err := res.LastInsertId()
+	note.Id = int(id)
+
+	return
 }
 
-func (n *noteRepository) Delete(id int) error {
-	panic("not implemented") // TODO: Implement
+func (n *noteRepository) Delete(id int) (err error) {
+	ctx := context.Background()
+	stmt, err := n.DB.PrepareContext(ctx, "DELETE FROM notes WHERE id = ?")
+
+	if err != nil {
+		return
+	}
+
+	res, err := stmt.ExecContext(ctx, id)
+	if err != nil {
+		return
+	}
+
+	rowAffected, err := res.RowsAffected()
+	if err != nil {
+		return
+	}
+
+	if rowAffected < 1 {
+		err = fmt.Errorf("something wrong with code, total affected: %d", rowAffected)
+		return
+	}
+
+	return
+
 }

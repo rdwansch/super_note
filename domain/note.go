@@ -2,7 +2,7 @@ package domain
 
 type Note struct {
 	Id      int    `json:"id"`
-	Tite    string `json:"title"`
+	Title   string `json:"title"`
 	Content string `json:"content"`
 	Cover   string `json:"cover"`
 
@@ -12,6 +12,6 @@ type Note struct {
 type NoteRepository interface {
 	FindAll() (notes []Note)
 	FindById(id int) (Note, error)
-	Create(note Note) error
-	Delete(id int) error
+	Create(note *Note) (err error)
+	Delete(id int) (err error)
 }
